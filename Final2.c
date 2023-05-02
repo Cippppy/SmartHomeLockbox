@@ -1,12 +1,9 @@
-#include <Drivers/Adafruit_BME280.h>
-#include <Drivers/Adafruit_BME280.h>
 #include <msp430.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "Drivers/GPIO_Driver.h"
 #include "Drivers/FR2355_UART_Driver.h"
-#include "Drivers/Adafruit_BME280.h"
-#include "Drivers/I2C.h"
+#include <Drivers/Adafruit_BME280.h>
 
 /**
  * Final2.c
@@ -17,7 +14,18 @@ char Vibration_Data_In;
 float Temperature_Data_In;
 float Humidity_Data_In;
 float Pressure_Data_In;
-unsigned char state = 0;    // Holds state value if we do state machine
+volatile float CO2_Reading;
+unsigned int position;
+
+//on board temperature definitions
+volatile float IntDegF;
+#define CALADC_15V_30C  *((unsigned int *)0x1A1A)
+#define CALADC_15V_85C  *((unsigned int *)0x1A1C)
+
+//ADC mode definitions
+#define CO2 1
+#define OBTEMP 0
+volatile unsigned char modeADC = 0x00;
 
 // Text that prints to terminal if distance < 15
 char alertText[] = {'D','A','N','G','E','R', ' ','N','E','A','R'};
@@ -28,7 +36,7 @@ char connectedText[] = {'S','u','c','c','e','s','s','f','u','l','l','y',' ','C',
 volatile unsigned long distance = 20;    // Holds distance calculated by ultrasonic sensor
 volatile unsigned int pulseCount = 0;   // Holds count used to calculate distance
 
-// Method Instantiation
+// Peripheral Instantiation
 void Init_HCSR04();
 void Init_Buzzer();
 void Init_Servo();
@@ -38,6 +46,11 @@ void Init_TEMP();
 void Init_CO2();
 void Init_UART_Pins();
 void Run_Ultrasonic();
+// Method Instantiation
+void readOBTemp();
+void Init_ADC();
+void readCO2();
+void updateThingSpeak();
 //void Run_Temp();
 void Ultrasonic_Wait(unsigned int timeToWait);
 void setServo(unsigned int angle);
@@ -54,9 +67,8 @@ void main(void)
     Init_WIFI();
     Init_TEMP();
     Init_CO2();
+    Init_ADC();
     Init_UART_Pins();
-    uart_Init_9600();
-    uart_Print(connectedText);
 
     // Disable the GPIO power-on default high-impedance mode to activate
     // previously configured port settings
@@ -68,17 +80,19 @@ void main(void)
 
     while(1)
     {
-       // Run_Ultrasonic();
+        Run_Ultrasonic();
+        readOBTemp();
+        while((ADCIFG & ADCIFG)==0);
+        readCO2();
 //        Run_Temp();
-        Temperature_Data_In = readTemperature();
-        Humidity_Data_In = readHumidity();
-        Pressure_Data_In = readPressure();
+//        Temperature_Data_In = readTemperature();
+//        Humidity_Data_In = readHumidity();
+//        Pressure_Data_In = readPressure();
         if(distance < 15) { // If distance is less than 15 (maybe cm?)
             setServo(180);
             gpioWrite(3,2,1);   // Turn on Red LED
             gpioWrite(3,3,1);   // Turn on Blue LED
             gpioWrite(3,7,1);   // Turn on Buzzer
-            uart_Print(alertText);  // Print "DANGER NEAR" to terminal
         }
         else {  // If distance is further than 15
             setServo(0);
@@ -86,7 +100,8 @@ void main(void)
             gpioWrite(3,3,0);   // Turn off Blue LED
             gpioWrite(3,7,0);   // Turn off buzzer
         }
-       // Ultrasonic_Wait(65000); // Wait some time (Maybe 65000 ms)
+        updateThingSpeak();
+        Ultrasonic_Wait(65000); // Wait some time (Maybe 65000 ms)
     }
 }
 
@@ -94,6 +109,22 @@ void main(void)
 /**
  * Peripheral Setups
  */
+
+// Sets up ADC for On-Board Temp sensor and CO2 sensor
+void Init_ADC()
+{
+    ADCCTL0 |= ADCSHT_8 | ADCON;                                  // ADC ON,temperature sample period>30us
+    ADCCTL1 |= ADCSHP;                                            // s/w trig, single ch/conv, MODOSC
+    ADCCTL2 &= ~ADCRES;                                           // clear ADCRES in ADCCTL
+    ADCCTL2 |= ADCRES_2;                                          // 12-bit conversion results
+    ADCMCTL0 |= ADCSREF_1 | ADCINCH_12;                           // ADC input ch A12 => temp sense
+    ADCIE |=ADCIE0;                                               // Enable the Interrupt request for a completed ADC_B conversion
+    modeADC = OBTEMP;
+
+    PMMCTL0_H = PMMPW_H;                                          // Unlock the PMM registers
+    PMMCTL2 |= INTREFEN | TSENSOREN;                              // Enable internal reference and temperature sensor
+    __delay_cycles(400);                                          // Delay for reference settling
+}
 
 // Setting up pins for Computer terminal connection
 void Init_UART_Pins()
@@ -156,7 +187,18 @@ void Init_LED()
 // Setup Wifi Module
 void Init_WIFI()
 {
+    UCA0CTLW0 |= UCSWRST; // Set USCI_A0 into software reset
 
+    UCA0CTLW0 |= UCSSEL__ACLK; // Choose BRCLK=ACLK=32.768kHz
+    UCA0BRW = 3; // Prescaler
+    UCA0MCTLW |= 0X9200;    // Modulation
+
+    // Tx Pin Setup
+    P1SEL0 |= BIT7;
+    P1SEL1 &= ~BIT7;
+
+    UCA0CTLW0 &= ~UCSWRST; // Take USCI_A0 out of software reset
+    UCA0IE |= UCRXIE;
 }
 
 // Setup Temperature Sensor to I2C Pins 1.6 and 1.7
@@ -278,6 +320,69 @@ void Ultrasonic_Wait(unsigned int timeToWait)
 //    UCB0IFG &= ~UCSTPIFG;
 //}
 
+// Read the CO2 sensor (A0)
+void readCO2()
+{
+    modeADC = CO2;
+    ADCMCTL0 |= ADCINCH_1;
+    ADCCTL0 |= ADCENC | ADCSC;                                    // Sampling and conversion start
+}
+
+// Read the onboard Temperature sensor
+void readOBTemp()
+{
+    modeADC = OBTEMP;
+    ADCMCTL0 |= ADCINCH_12;
+    ADCCTL0 |= ADCENC | ADCSC;                                    // Sampling and conversion start
+}
+
+void updateThingSpeak()
+{
+    int intOBT = (int) IntDegF;
+    int intCO2 = (int) CO2_Reading;
+    int intBME280 = (int) Temperature_Data_In;
+    char message[13];
+    message[0] = (intOBT / 100) + '0';
+    message[1] = ((intOBT / 10) % 10) + '0';
+    message[2] = (intOBT % 10) + '0';
+    message[3] = ';';
+    message[4] = (intCO2 / 1000) + '0';
+    message[5] = ((intCO2 / 100) % 10) + '0';
+    message[6] = ((intCO2 / 10) % 10) + '0';
+    message[7] = (intCO2 % 10) + '0';
+    message[8] = ':';
+    message[9] = (intBME280 / 100) + '0';
+    message[10] = ((intBME280 / 10) % 10) + '0';
+    message[11] = (intBME280 % 10) + '0';
+    message[12] = '.';
+    //uart_Print(message);
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[0];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[1];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[2];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[3];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[4];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[5];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[6];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[7];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[8];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[9];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[10];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[11];
+    while((UCA0IFG & UCTXIFG)==0);
+    UCA0TXBUF = message[12];
+}
 
 /**
  * Interrupt Routines
@@ -331,4 +436,53 @@ __interrupt void Timer2_B0_ISR(void)
 {
     pulseCount++;
     TB2CCR0 += 50;               // Add Offset to TB0CCR0 (anything smaller than 50 is too fast)
+}
+
+// ADC interrupt service routine
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=ADC_VECTOR
+__interrupt void ADC_ISR(void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(ADC_VECTOR))) ADC_ISR (void)
+#else
+#error Compiler not supported!
+#endif
+{
+    volatile float temp;
+
+    volatile float IntDegC;
+
+    switch(__even_in_range(ADCIV,ADCIV_ADCIFG))
+    {
+        case ADCIV_NONE:
+            break;
+        case ADCIV_ADCOVIFG:
+            break;
+        case ADCIV_ADCTOVIFG:
+            break;
+        case ADCIV_ADCHIIFG:
+            break;
+        case ADCIV_ADCLOIFG:
+            break;
+        case ADCIV_ADCINIFG:
+            break;
+        case ADCIV_ADCIFG:
+            if(modeADC) {
+                CO2_Reading = ADCMEM0;
+            }
+            else {
+                temp = ADCMEM0;
+                // Temperature in Celsius
+                // The temperature (Temp, C)=
+                IntDegC = (temp-CALADC_15V_30C)*(85-30)/(CALADC_15V_85C-CALADC_15V_30C)+30;
+
+                // Temperature in Fahrenheit
+                // Tf = (9/5)*Tc | 32
+                IntDegF = 9*IntDegC/5+32;
+                //__bic_SR_register_on_exit(LPM3_bits);               // Exit LPM3
+            }
+            break;
+        default:
+            break;
+    }
 }
