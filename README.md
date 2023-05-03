@@ -26,6 +26,14 @@ The onboard temperature sensor and ultrasonic sensors are confirmed to be workin
 ## Project Video
 https://user-images.githubusercontent.com/98924381/235829279-1a4e9000-3827-43de-8596-dcd38e9c36f0.mp4
 
+# Appendix
+## Resources & Datasheets
+* BME280 [Datasheet](https://cdn-learn.adafruit.com/downloads/pdf/adafruit-bme280-humidity-barometric-pressure-temperature-sensor-breakout.pdf)
+* MPU6050 [Datasheet](https://www.haoyuelectronics.com/Attachment/GY-521/mpu6050.pdf)
+* Ultrasonic [Datasheet](https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf)
+* MQ-9B [Datasheet](https://cdn.sparkfun.com/assets/d/f/5/e/2/MQ-9B_Ver1.4__-_Manual.pdf), [Wiring Example](http://wiring.org.co/learning/basics/airqualitymq135.html)
+* Servo [Datasheet](http://www.ee.ic.ac.uk/pcheung/teaching/DE1_EE/stores/sg90_datasheet.pdf)
+* ESP01 [Datasheet](https://www.universal-solder.ca/downloads/esp8266_series_modules_user_manual_en.pdf)
 
 
 
