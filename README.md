@@ -24,5 +24,8 @@ The Smart Home Lockbox is a project created by Christian Cipolletta and Matt Ger
 The onboard temperature sensor and ultrasonic sensors are confirmed to be working. The CO2 gives an ouput, but we do not know if it is correct. The batteries are not strong enough to run the circuit, so it is wall power right now. The I2C code doesn't work so the BME280 and MPU6050 aren't working now either. The servos, LEDs, buzzers, and ESP01 all work.
 
 ## Project Video
-![Smart Home Lockbox Demo](https://user-images.githubusercontent.com/98924381/235828756-a3f5627b-32d5-4f07-83e6-d499ffd98eca.mp4)
+https://user-images.githubusercontent.com/98924381/235829279-1a4e9000-3827-43de-8596-dcd38e9c36f0.mp4
+
+
+
 
