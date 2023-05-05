@@ -21,19 +21,20 @@ The Smart Home Lockbox is a project created by Christian Cipolletta and Matt Ger
 * Servo
 
 ## Where is the project at?
-The onboard temperature sensor and ultrasonic sensors are confirmed to be working. The CO2 gives an ouput, but we do not know if it is correct. The batteries are not strong enough to run the circuit, so it is wall power right now. The I2C code doesn't work so the BME280 and MPU6050 aren't working now either. The servos, LEDs, buzzers, and ESP01 all work.
+The onboard temperature sensor and ultrasonic sensors are confirmed to be working. The CO2 gives an ouput, but we do not know if it is correct. The batteries are not strong enough to run the circuit, so it is wall power right now. The I2C code doesn't work so the BME280 and MPU6050 aren't working now either. The servos, LEDs, buzzers, and ESP01 all work. You can read more on our [project slides](https://docs.google.com/presentation/d/1oNxZCWa-71zp4ZQAXbW0OE4L5BJcd05L6jm5VQH0Wrw/edit?usp=sharing) or our [project report](https://docs.google.com/document/d/1pnApUV6Cqu8zDdYJzm2F5OI0f5RzCBrWJ35Rd4LK8bY/edit?usp=sharing).
 
 ## Project Video
 https://user-images.githubusercontent.com/98924381/235829279-1a4e9000-3827-43de-8596-dcd38e9c36f0.mp4
 
 # Appendix
 ## Resources & Datasheets
-* BME280 [Datasheet](https://cdn-learn.adafruit.com/downloads/pdf/adafruit-bme280-humidity-barometric-pressure-temperature-sensor-breakout.pdf)
+* BME280 [Datasheet](https://cdn-learn.adafruit.com/downloads/pdf/adafruit-bme280-humidity-barometric-pressure-temperature-sensor-breakout.pdf), [Arduino Github](https://github.com/adafruit/Adafruit_BME280_Library)
 * MPU6050 [Datasheet](https://www.haoyuelectronics.com/Attachment/GY-521/mpu6050.pdf)
 * Ultrasonic [Datasheet](https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf)
 * MQ-9B [Datasheet](https://cdn.sparkfun.com/assets/d/f/5/e/2/MQ-9B_Ver1.4__-_Manual.pdf), [Wiring Example](http://wiring.org.co/learning/basics/airqualitymq135.html)
 * Servo [Datasheet](http://www.ee.ic.ac.uk/pcheung/teaching/DE1_EE/stores/sg90_datasheet.pdf)
 * ESP01 [Datasheet](https://www.universal-solder.ca/downloads/esp8266_series_modules_user_manual_en.pdf)
+* Updating 3D Model of the Lockbox [OnShape](https://cad.onshape.com/documents/b93b4b42872b4098d45294de/w/dbbdbcc2a9ef1ffa882faf1d/e/f71d34ea460787590961a1fb?renderMode=0&uiState=64553cd0d9ecec32a6cac62c)
 
 
 
