@@ -106,4 +106,8 @@ uint8_t   _i2caddr;
 int32_t   _sensorID;
 int32_t   t_fine;
 
-#endif
+float readTemperature(void);
+float readPressure(void);
+float readHumidity(void);
+
+#endif /* Adafruit_BME280_H_ */
