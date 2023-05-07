@@ -20,8 +20,11 @@ The Smart Home Lockbox is a project created by Christian Cipolletta and Matt Ger
 * ESP01 Wifi Module [[ThingSpeak]](https://thingspeak.com/channels/2104523)
 * Servo
 
-## Where is the project at?
-The onboard temperature sensor and ultrasonic sensors are confirmed to be working. The CO2 gives an ouput, but we do not know if it is correct. The batteries are not strong enough to run the circuit, so it is wall power right now. The I2C code doesn't work so the BME280 and MPU6050 aren't working now either. The servos, LEDs, buzzers, and ESP01 all work. You can read more on our [project slides](https://docs.google.com/presentation/d/1oNxZCWa-71zp4ZQAXbW0OE4L5BJcd05L6jm5VQH0Wrw/edit?usp=sharing) or our [project report](https://docs.google.com/document/d/1pnApUV6Cqu8zDdYJzm2F5OI0f5RzCBrWJ35Rd4LK8bY/edit?usp=sharing).
+## Where is the project at? (5/7/2023)
+The onboard temperature sensor and ultrasonic sensors are confirmed to be working. The CO2 gives an ouput, but we do not know if it is correct. The batteries are not strong enough to run the circuit, so it is wall power right now. The I2C code doesn't work so the BME280 and MPU6050 aren't working now either. The servos, LEDs, buzzers, and ESP01 all work. The 3D printed box that will be the actual one that locks was successfully printed and locked by the servo. However, it was unable to be covered because it is too small to fit the full PCB at this time. You can read more on our [project slides](https://docs.google.com/presentation/d/1oNxZCWa-71zp4ZQAXbW0OE4L5BJcd05L6jm5VQH0Wrw/edit?usp=sharing) or our [project report](https://docs.google.com/document/d/1pnApUV6Cqu8zDdYJzm2F5OI0f5RzCBrWJ35Rd4LK8bY/edit?usp=sharing).
+
+## Future Work
+The next steps to take to make the project a full success start with remaking the PCB. First, the ESP01 needs to switch its trace. Second, the servo header needs to be retraced as well. Last, there needs to be a new battery choosen to the power the device. On the software side, the main fix is making sure the I2C connections are fixed. Once that is fixed, to make this device low-power it would be a benefit to make the code interrupt based instead of the current polling based system. The final thing to fix would be to make the lock box big enough to encase the PCB and all parts while still being able to be locked and to store items.
 
 ## Project Video
 https://user-images.githubusercontent.com/98924381/235829279-1a4e9000-3827-43de-8596-dcd38e9c36f0.mp4
